@@ -21,23 +21,39 @@ device = torch.device(
 
 if __name__ == "__main__":
 
-    x0 = 25
-    x1 = 160
-    y0 = 32
-    y1 = 177
-
     def sampler(img):
+        """
+        Return content of rect. area as array of (pixel_value, y, x) samples 
+        """
+        x0 = 25
+        x1 = 160
+        y0 = 32
+        y1 = 177
+
         roi = img[y0:y1, x0:x1]
         samples = roi.copy()
         y, x = np.indices(roi.shape)
         y += y0
         x += x0
         samples = np.dstack((samples, y, x))
-        s = samples.shape
-        return samples.reshape(s[0] * s[1], s[2])
+        return samples.reshape(-1, samples.shape[2])
+
+    def sampler2(img, number):
+        """
+        Samples (pixel_value, y, x) values at <number> random coordinates
+        """
+        y, x = np.indices(img.shape)
+        samples = np.dstack((img.copy(), y, x))
+        samples = samples.reshape(
+            -1, samples.shape[2]
+        )  # create 1D array of (p,y,x) 'points'
+        random_indices = np.arange(0, samples.shape[0])  # array of all indices
+        np.random.shuffle(random_indices)
+        return samples[random_indices[:number]]  # get N samples without replacement
 
     img = loadToyImage(data_dir / "randomborder.png")
-    samples = selectSample(img, sampler)
+    N = image_area(img) // 12
+    samples = selectSample(img, sampler2, N)
     img2 = np.zeros(img.shape)
     for p in samples:
         img2[p[1], p[2]] = p[0]
