@@ -21,32 +21,40 @@ device = torch.device(
 
 
 if __name__ == "__main__":
-    img = loadToyImage(data_dir / "randomborder.png")
-    img = cv2.normalize(img, img, 1, 255, cv2.NORM_MINMAX)
-    # samples = selectSample(img, sampler_ROI, [25, 32, 160, 177])
-    samples = selectSample(img, sampler_random, image_area(img) // 4)
-    img2 = np.zeros(img.shape, dtype=np.uint8)
+    decision_regions_img = loadToyImage(data_dir / "randomborder.png")
+    decision_regions_img = cv2.normalize(
+        decision_regions_img, decision_regions_img, 1, 255, cv2.NORM_MINMAX
+    )
+    # samples = selectSample(decision_regions_img, sampler_ROI, [25, 32, 160, 177])
+
+    # random 5% state space coverage
+    samples = selectSample(
+        decision_regions_img, sampler_random, image_area(decision_regions_img) // 20
+    )
+    samples_img = np.zeros(decision_regions_img.shape, dtype=np.uint8)
     for p in samples:
-        img2[p[1], p[2]] = p[0]
+        samples_img[p[1], p[2]] = p[0]
 
     # https://matplotlib.org/3.1.1/gallery/color/colormap_reference.html
     mplot_map = "PuBuGn"
-    img2 = apply_colormap(img2, mplot_map)
-    write_image(out_dir / "randomborder.png", img2)
-    img = apply_colormap(img, mplot_map)
-    write_image(out_dir / "randomborder_ori.png", img)
+    write_image(
+        out_dir / "randomborder_samples.png", colormapped_image(samples_img, mplot_map)
+    )
+    write_image(
+        out_dir / "randomborder_colored.png",
+        colormapped_image(decision_regions_img, mplot_map),
+    )
     labels = samples[:, 0]
     coords = samples[:, 1:]
 
-    # for p in samples
-
-    #     train_data = convert2Dataset(images, device)
+    train_data = convert2Dataset(coords, labels, device)
     #     # save_as_png(images, out_dir, correct_labels=labels, pred_labels=None)
     #     print("Trainings data extracted")
     #     test_images = loadDataAsDataset(data_dir / "test.csv", device)
     #     print("Test data extracted")
     #
-    #     # model = ConvNet()
+    model = SimpleNet()
+    train(model, train_data, epochs=20, bs=18, lr=0.008, device=device)
     #     # pred_labels = run(model, train_data, epochs=1, bs=500, lr=0.008, test_data=test_images, device=device)
     #
     #     nets = createBinaryEnsemble()

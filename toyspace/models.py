@@ -13,8 +13,8 @@ class SimpleNet(nn.Sequential):
     Simple sequential net using ReLU
     """
 
-    input_size = 784
-    hidden_sizes = [128, 64]
+    input_size = 2  # 2-pixel images
+    hidden_sizes = [32, 20, 16]  # expand
     output_size = 10
 
     def __init__(self):
@@ -23,14 +23,17 @@ class SimpleNet(nn.Sequential):
             nn.ReLU(),
             nn.Linear(self.hidden_sizes[0], self.hidden_sizes[1]),
             nn.ReLU(),
-            nn.Linear(self.hidden_sizes[1], self.output_size),
+            nn.Linear(self.hidden_sizes[1], self.hidden_sizes[2]),
+            nn.ReLU(),
+            nn.Linear(self.hidden_sizes[2], self.output_size),
             nn.LogSoftmax(dim=1),
         )
         print(self)
 
     def adjustImages(self, images):
-        # flatten MNIST images into 1D array (784 entries)
-        return images.view(images.shape[0], -1)
+        # flatten images into 1D array (2 entries)
+        return images  # dummy
+        # return images.view(images.shape[0], -1)
 
 
 class ConvNet(nn.Module):

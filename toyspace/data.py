@@ -5,7 +5,7 @@ Loading and sampling from Toy space
 from pytraits.image.io import *
 import numpy as np
 from torch.utils.data import TensorDataset
-from torch import FloatTensor
+from torch import FloatTensor, LongTensor
 
 
 def loadToyImage(fpath):
@@ -19,11 +19,16 @@ def selectSample(img, sampler, *args):
     return samples
 
 
-def convert2Dataset(images, device) -> TensorDataset:
+def convert2Dataset(images, labels, device) -> TensorDataset:
     """
     Converts numpy-based data sets to device-bound torch dataset
     """
-    return TensorDataset(FloatTensor(images).to(device))
+    if labels is not None:
+        return TensorDataset(
+            FloatTensor(images).to(device), LongTensor(labels).to(device)
+        )
+    else:
+        return TensorDataset(FloatTensor(images).to(device))
 
 
 def sampler_ROI(img, rect):
