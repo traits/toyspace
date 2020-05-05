@@ -1,6 +1,7 @@
 from pytraits.image.base import *
 from pytraits.image.io import *
 from pytraits.pytorch import cuda
+import cv2
 
 
 from data import *
@@ -20,44 +21,22 @@ device = torch.device(
 
 
 if __name__ == "__main__":
-
-    def sampler(img):
-        """
-        Return content of rect. area as array of (pixel_value, y, x) samples 
-        """
-        x0 = 25
-        x1 = 160
-        y0 = 32
-        y1 = 177
-
-        roi = img[y0:y1, x0:x1]
-        samples = roi.copy()
-        y, x = np.indices(roi.shape)
-        y += y0
-        x += x0
-        samples = np.dstack((samples, y, x))
-        return samples.reshape(-1, samples.shape[2])
-
-    def sampler2(img, number):
-        """
-        Samples (pixel_value, y, x) values at <number> random coordinates
-        """
-        y, x = np.indices(img.shape)
-        samples = np.dstack((img.copy(), y, x))
-        samples = samples.reshape(
-            -1, samples.shape[2]
-        )  # create 1D array of (p,y,x) 'points'
-        random_indices = np.arange(0, samples.shape[0])  # array of all indices
-        np.random.shuffle(random_indices)
-        return samples[random_indices[:number]]  # get N samples without replacement
-
     img = loadToyImage(data_dir / "randomborder.png")
-    N = image_area(img) // 12
-    samples = selectSample(img, sampler2, N)
-    img2 = np.zeros(img.shape)
+    img = cv2.normalize(img, img, 1, 255, cv2.NORM_MINMAX)
+    # samples = selectSample(img, sampler_ROI, [25, 32, 160, 177])
+    samples = selectSample(img, sampler_random, image_area(img) // 4)
+    img2 = np.zeros(img.shape, dtype=np.uint8)
     for p in samples:
         img2[p[1], p[2]] = p[0]
+
+    # https://matplotlib.org/3.1.1/gallery/color/colormap_reference.html
+    mplot_map = "PuBuGn"
+    img2 = applyColormap(img2, mplot_map)
     write_image(out_dir / "randomborder.png", img2)
+    img = applyColormap(img, mplot_map)
+    write_image(out_dir / "randomborder_ori.png", img)
+    labels = samples[:, 0]
+    coords = samples[:, 1:]
 
     # for p in samples
 
