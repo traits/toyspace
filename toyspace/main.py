@@ -31,9 +31,9 @@ if __name__ == "__main__":
 
     # https://matplotlib.org/3.1.1/gallery/color/colormap_reference.html
     mplot_map = "PuBuGn"
-    img2 = applyColormap(img2, mplot_map)
+    img2 = apply_colormap(img2, mplot_map)
     write_image(out_dir / "randomborder.png", img2)
-    img = applyColormap(img, mplot_map)
+    img = apply_colormap(img, mplot_map)
     write_image(out_dir / "randomborder_ori.png", img)
     labels = samples[:, 0]
     coords = samples[:, 1:]

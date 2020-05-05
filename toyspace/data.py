@@ -8,32 +8,6 @@ from torch.utils.data import TensorDataset
 from torch import FloatTensor
 
 
-def applyColormap(img, matplot_map_name):
-    """
-    Applies matplotlib colormap to opencv grayscale image
-    """
-    import matplotlib.pyplot as plt
-    import matplotlib.colors as mcol
-    import cv2
-
-    cmap = plt.get_cmap(matplot_map_name)
-    cmaplist = [cmap(i) for i in range(cmap.N)]
-
-    # replace 1st entry by black
-    cmaplist[0] = (
-        0.0,
-        0.0,
-        0.0,
-        1.0,
-    )  # clip this later, if using 1.0 values for color components
-    # colormap = mcol.LinearSegmentedColormap.from_list("pytraits", cmaplist, cmap.N)
-    colormap = mcol.ListedColormap(cmaplist, "pytraits", cmap.N)
-    cmap = colormap(img) * 2 ** 16
-    # np.clip(cmap, 0, 2 ** 16 - 1, out=cmap)  # avoid overflows (see above)
-    result = cmap.astype(np.uint16)[:, :, :3]
-    return cv2.cvtColor(result, cv2.COLOR_RGB2BGR)
-
-
 def loadToyImage(fpath):
     img = read_image(fpath)
     return img
