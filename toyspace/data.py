@@ -31,7 +31,7 @@ def convert2Dataset(images, labels, device) -> TensorDataset:
         return TensorDataset(FloatTensor(images).to(device))
 
 
-def sampler_ROI(img, rect):
+def ROI_sampler(img, rect):
     """
     Returns complete content of rect. area as array of (pixel_value, y, x) samples 
     
@@ -52,7 +52,7 @@ def sampler_ROI(img, rect):
     return samples.reshape(-1, samples.shape[2])
 
 
-def sampler_random(img, number):
+def random_sampler(img, number):
     """
     Samples pixel from random coordinates
     
@@ -69,3 +69,26 @@ def sampler_random(img, number):
     random_indices = np.arange(0, samples.shape[0])  # array of all indices
     np.random.shuffle(random_indices)
     return samples[random_indices[:number]]  # get N samples without replacement
+
+
+def partition_sampler(img):
+    """
+    Creates partition of the whole input image. Every sub-arrays contains only elements 
+    with the same pixel value and variable associated coordinates (pixel_value, y, x).
+    
+    Parameters:
+        :img: input gray image
+        :return: partition of the img
+    """
+    y, x = np.indices(img.shape)
+    samples = np.dstack((img.copy(), y, x))
+    samples = samples.reshape(
+        -1, samples.shape[2]
+    )  # create 1D array of (p,y,x) 'points'
+
+    samples = np.msort(samples)  # sort, using pixel value
+    first = samples[:, 0]  # sorted 1D array of pixel values
+    # calculate indices, where pixel values (class) change
+    _, indices = np.unique(first, return_index=True)
+    # split the original array at these indices
+    return np.split(samples, indices)

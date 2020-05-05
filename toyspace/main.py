@@ -25,11 +25,13 @@ if __name__ == "__main__":
     decision_regions_img = cv2.normalize(
         decision_regions_img, decision_regions_img, 1, 255, cv2.NORM_MINMAX
     )
-    # samples = selectSample(decision_regions_img, sampler_ROI, [25, 32, 160, 177])
+    # samples = selectSample(decision_regions_img, ROI_sampler, [25, 32, 160, 177])
+
+    samples = selectSample(decision_regions_img, partition_sampler)
 
     # random 5% state space coverage
     samples = selectSample(
-        decision_regions_img, sampler_random, image_area(decision_regions_img) // 20
+        decision_regions_img, random_sampler, image_area(decision_regions_img) // 10
     )
     samples_img = np.zeros(decision_regions_img.shape, dtype=np.uint8)
     for p in samples:
@@ -54,7 +56,7 @@ if __name__ == "__main__":
     #     print("Test data extracted")
     #
     model = SimpleNet()
-    train(model, train_data, epochs=20, bs=18, lr=0.008, device=device)
+    train(model, train_data, epochs=300, bs=20, lr=0.008, device=device)
     #     # pred_labels = run(model, train_data, epochs=1, bs=500, lr=0.008, test_data=test_images, device=device)
     #
     #     nets = createBinaryEnsemble()
