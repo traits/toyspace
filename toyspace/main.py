@@ -14,40 +14,52 @@ project_dir = Path(__file__).resolve().parents[1]
 data_dir = project_dir / "data"
 out_dir = project_dir / "_output"
 
+toy_image = data_dir / "randomborder.png"
+
+
 # TODO https://discuss.pytorch.org/t/dataloader-returns-cpu-tensors/17933/2
 device = torch.device(
     f"cuda:{cuda.Cuda().device_count()-1}" if torch.cuda.is_available() else "cpu"
 )
 
 
-if __name__ == "__main__":
-    decision_regions_img = loadToyImage(data_dir / "randomborder.png")
-    decision_regions_img = cv2.normalize(
-        decision_regions_img, decision_regions_img, 1, 255, cv2.NORM_MINMAX
-    )
-    # samples = selectSample(decision_regions_img, ROI_sampler, [25, 32, 160, 177])
+def maximizedImage(img):
+    result = img.copy()
+    # preserve zero for background
+    return cv2.normalize(img, result, 1, 255, cv2.NORM_MINMAX)
 
-    samples = selectSample(decision_regions_img, partition_sampler)
 
-    # random 5% state space coverage
-    samples = selectSample(
-        decision_regions_img, random_sampler, image_area(decision_regions_img) // 10
-    )
-    samples_img = np.zeros(decision_regions_img.shape, dtype=np.uint8)
-    for p in samples:
-        samples_img[p[1], p[2]] = p[0]
-
+def writeColorImage(img, fname):
     # https://matplotlib.org/3.1.1/gallery/color/colormap_reference.html
     mplot_map = "PuBuGn"
     write_image(
-        out_dir / "randomborder_samples.png", colormapped_image(samples_img, mplot_map)
+        out_dir / fname, colormapped_image(img, mplot_map),
     )
-    write_image(
-        out_dir / "randomborder_colored.png",
-        colormapped_image(decision_regions_img, mplot_map),
-    )
+
+
+def writeSampleImage(shape, max_value, samples, fname):
+    samples_img = np.zeros(shape, dtype=np.uint8)
+    for p in samples:
+        samples_img[p[1], p[2]] = np.uint8(255.0 * p[0] / max_value)
+
+    writeColorImage(samples_img, fname)
+
+
+if __name__ == "__main__":
+    regions, categories = loadToyImage(toy_image)
+    writeColorImage(maximizedImage(regions), "randomborder_colored.png")
+
+    # samples = selectSample(regions, ROI_sampler, [25, 32, 160, 177])
+    # samples = selectSample(regions, partition_sampler)
+    # writeSampleImage(regions.shape, categories, samples[3], "randomborder_samples.png")
+
+    # random 5% state space coverage
+    samples = selectSample(regions, random_sampler, image_area(regions) // 20)
+
+    writeSampleImage(regions.shape, categories, samples, "randomborder_samples.png")
+
     labels = samples[:, 0]
-    coords = samples[:, 1:]
+    coords = np.multiply(samples[:, 1:], 1.0 / 255.0)  # samples[:, 1:]
 
     train_data = convert2Dataset(coords, labels, device)
     #     # save_as_png(images, out_dir, correct_labels=labels, pred_labels=None)
@@ -56,7 +68,7 @@ if __name__ == "__main__":
     #     print("Test data extracted")
     #
     model = SimpleNet()
-    train(model, train_data, epochs=300, bs=20, lr=0.008, device=device)
+    train(model, train_data, epochs=50, bs=17, lr=0.008, device=device)
     #     # pred_labels = run(model, train_data, epochs=1, bs=500, lr=0.008, test_data=test_images, device=device)
     #
     #     nets = createBinaryEnsemble()

@@ -1,3 +1,3 @@
 # toyspace
 
-Toy space example
+Toy space examples

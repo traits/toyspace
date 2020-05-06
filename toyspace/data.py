@@ -9,13 +9,30 @@ from torch import FloatTensor, LongTensor
 
 
 def loadToyImage(fpath):
+    """
+    Load a grayscale image and return a mapped variant with pixel values
+    from [1,2,...,n], where n is the number of unique values from the source 
+    """
     img = read_image(fpath)
-    return img
+    if img.shape != (256, 256):
+        raise Exception("Image must be grayscale with size=(256,256)")
+
+    # The values of inv elements are indices into u. u is a sorted
+    # 1D array, so the indexes come from the consecutive vector
+    # [0,1,2,...,len(u)-1], which maps 1<->1 to
+    # [u_min,u_1,u_2,...,u_max], preserving the order.
+    # Indices of inv's values also correspondent to the u_i
+    # coordinates in u
+
+    # This will map img to a new one with pixel values from
+    # [1,...,len(u)]
+    u, inv = np.unique(img, return_inverse=True)
+    inv += 1  # (we need the zero later)
+    return inv.reshape(img.shape).astype(np.uint8), len(u)
 
 
 def selectSample(img, sampler, *args):
     samples = sampler(img, *args)
-    # return np.multiply(samples, 1.0 / 255.0), coords
     return samples
 
 
@@ -73,8 +90,8 @@ def random_sampler(img, number):
 
 def partition_sampler(img):
     """
-    Creates partition of the whole input image. Every sub-arrays contains only elements 
-    with the same pixel value and variable associated coordinates (pixel_value, y, x).
+    Creates partition of the whole input image. Every sub-arrays contains all elements 
+    with the same pixel value and associated coordinates (pixel_value, y, x).
     
     Parameters:
         :img: input gray image
@@ -86,7 +103,7 @@ def partition_sampler(img):
         -1, samples.shape[2]
     )  # create 1D array of (p,y,x) 'points'
 
-    samples = np.msort(samples)  # sort, using pixel value
+    samples = samples[samples[:, 0].argsort()]  # sort, using pixel value
     first = samples[:, 0]  # sorted 1D array of pixel values
     # calculate indices, where pixel values (class) change
     _, indices = np.unique(first, return_index=True)
