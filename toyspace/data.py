@@ -109,3 +109,35 @@ def partition_sampler(img):
     _, indices = np.unique(first, return_index=True)
     # split the original array at these indices
     return np.split(samples, indices)
+
+
+def grid_sampler(img, steps):
+    """
+    Returns values at grid coordinates for required coordinate density.
+    Coordinates will be rounded, so they are not quite equidistant (up to 2 pixel)
+    
+    Parameters:
+        :img: input gray image
+        :steps: number of sampling equidistant sampling points per coordinate: [xpoints, ypoints]
+        :return: 1D-array of (pixel_value, y, x) samples
+    """
+
+    dx, dy = steps
+
+    y0 = 0
+    x0 = 0
+    y1 = img.shape[0] - 1
+    x1 = img.shape[1] - 1
+
+    X = np.around(np.linspace(x0, x1, dx)).astype(np.uint8)
+    Y = np.around(np.linspace(y0, y1, dy)).astype(np.uint8)
+
+    # Slow?
+    samples = []
+    for y in Y:
+        for x in X:
+            samples.append(np.array([img[y, x], y, x]))
+
+    samples = np.asarray(samples)
+
+    return samples
