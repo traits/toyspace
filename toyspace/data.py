@@ -17,11 +17,11 @@ def loadToyImage(fpath):
     if img.shape != (256, 256):
         raise Exception("Image must be grayscale with size=(256,256)")
 
-    # The values of inv elements are indices into u. u is a sorted
-    # 1D array, so the indexes come from the consecutive vector
-    # [0,1,2,...,len(u)-1], which maps 1<->1 to
-    # [u_min,u_1,u_2,...,u_max], preserving the order.
-    # Indices of inv's values also correspondent to the u_i
+    # The values of inv's elements are indices of u. u is a unique
+    # sorted 1D array, so the indexes come from the consecutive
+    # vector [0,1,2,...,len(u)-1], which maps 1<->1 to
+    # [u_min,u_1,u_2,...,u_max], preserving the order. Indices
+    # of inv's values also correspondent to respective u_i
     # coordinates in u
 
     # This will map img to a new one with pixel values from

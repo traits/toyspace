@@ -14,7 +14,7 @@ class SimpleNet(nn.Sequential):
     """
 
     input_size = 2  # 2-pixel images
-    hidden_sizes = [48, 32, 8]  # expand
+    hidden_sizes = [32, 16, 24]  # expand
     output_size = 10
 
     def __init__(self):

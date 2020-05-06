@@ -55,11 +55,10 @@ if __name__ == "__main__":
 
     # random 5% state space coverage
     samples = selectSample(regions, random_sampler, image_area(regions) // 20)
-
     writeSampleImage(regions.shape, categories, samples, "randomborder_samples.png")
 
     labels = samples[:, 0]
-    coords = np.multiply(samples[:, 1:], 1.0 / 255.0)  # samples[:, 1:]
+    coords = np.multiply(samples[:, 1:], 1.0 / 255.0)  # normalize in [0,1]
 
     train_data = convert2Dataset(coords, labels, device)
     #     # save_as_png(images, out_dir, correct_labels=labels, pred_labels=None)
@@ -68,7 +67,7 @@ if __name__ == "__main__":
     #     print("Test data extracted")
     #
     model = SimpleNet()
-    train(model, train_data, epochs=50, bs=17, lr=0.008, device=device)
+    train(model, train_data, epochs=300, bs=17, lr=0.008, device=device)
     #     # pred_labels = run(model, train_data, epochs=1, bs=500, lr=0.008, test_data=test_images, device=device)
     #
     #     nets = createBinaryEnsemble()
