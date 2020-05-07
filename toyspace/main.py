@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
     # random 5% state space coverage
     # samples = selectSample(regions, random_sampler, image_area(regions) // 20)
-    samples = selectSample(regions, grid_sampler, [70, 60])
+    samples = selectSample(regions, grid_sampler, [20, 10], [40, 20, 150, 90])
     writeSampleImage(regions.shape, categories, samples, "randomborder_samples.png")
 
     labels = samples[:, 0]
