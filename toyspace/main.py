@@ -50,18 +50,24 @@ if __name__ == "__main__":
     regions, categories = loadToyImage(toy_image)
     writeColorImage(maximizedImage(regions), "randomborder_colored.png")
 
-    # samples = selectSample(regions, ROI_sampler, [25, 32, 160, 177])
-    # samples = selectSample(regions, partition_sampler)
-    # writeSampleImage(regions.shape, categories, samples[3], "randomborder_samples.png")
+    samples = roi_sampler(regions, [25, 32, 160, 177])
+    writeSampleImage(regions.shape, categories, samples, "roi_sampler.png")
+    samples = partition_sampler(regions)
+
+    i = 1
+    for s in samples:
+        writeSampleImage(regions.shape, categories, s, f"partition_sampler_{i:02d}.png")
+        i += 1
 
     regions_g = ((255 / categories) * regions).astype(np.uint8)
     contours, _ = find_contours(regions_g, 100, complexity=cv2.RETR_EXTERNAL)
     cv2.drawContours(regions, contours, -1, 255, 1)
-    cv2.imwrite(str(out_dir / "test.png"), regions)
+    cv2.imwrite(str(out_dir / "random_sampler_contour_t.png"), regions)
 
-    samples = selectSample(regions, random_sampler, 10000, contours[2])
-    # samples = selectSample(regions, random_sampler, image_area(regions) // 20)
-    writeSampleImage(regions.shape, categories, samples, "randomborder_samples.png")
+    samples = random_sampler(regions, 10000, contours[2])
+    writeSampleImage(regions.shape, categories, samples, "random_sampler_contour.png")
+    samples = random_sampler(regions, image_area(regions) // 20)
+    writeSampleImage(regions.shape, categories, samples, "random_sampler_all.png")
 
     labels = samples[:, 0]
     coords = np.multiply(samples[:, 1:], 1.0 / 255.0)  # normalize in [0,1]
