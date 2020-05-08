@@ -69,7 +69,7 @@ def ROI_sampler(img, rect):
     return samples.reshape(-1, samples.shape[2])
 
 
-def random_sampler(img, number):
+def _random_sampler(img, rhull, number):
     """
     Samples pixel from random coordinates
     
@@ -78,59 +78,66 @@ def random_sampler(img, number):
         :number: number of pixel drawn (w/o replacement)
         :return: 1D-array of (pixel_value, y, x) samples
     """
-    y, x = np.indices(img.shape)
-    samples = np.dstack((img.copy(), y, x))
+
+    x, y, w, h = rhull
+
+    roi = img[y : y + h, x : x + w]
+    iy, ix = np.indices(roi.shape)
+    iy += y
+    ix += x
+    samples = np.dstack((roi.copy(), iy, ix))
     samples = samples.reshape(
         -1, samples.shape[2]
     )  # create 1D array of (p,y,x) 'points'
     random_indices = np.arange(0, samples.shape[0])  # array of all indices
     np.random.shuffle(random_indices)
+
     return samples[random_indices[:number]]  # get N samples without replacement
 
 
-def random_sampler2(img, contour, number):
+def random_sampler(img, number, contour=np.array([])):
     """
-    Samples pixel from random coordinates in contour
+    Randomly samples pixel from the contours rectangular 
+    hull and returns the subset inside the contour.
+    
+    Remark: 'number' is the requested number for data points 
+    inside contour. But actually, the function draws the samples from 
+    the enclosing rectangle. It increases 'number' internally by 
+    multiplying it with the quotient of the both structures area (r_a/c_a) 
+    before doing so. After that, it returns the samples covered by the contour. 
+    Their number might slightly differ from the requested number.
     
     Parameters:
         :img: input gray image
+        :number: number of pixel drawn (w/o replacement). 
         :contour: ROI as OpenCV contour
-        :number: number of pixel drawn (w/o replacement)
         :return: 1D-array of (pixel_value, y, x) samples
     """
 
+    # contour == whole image
+    if contour.shape == (0,):
+        h, w = img.shape
+        return _random_sampler(img, [0, 0, w, h], number)
+
     # calculate rect. hull
     rhull = cv2.boundingRect(contour)
+
     # calc. area quotient
     ra = rhull[2] * rhull[3]
     ca = cv2.contourArea(contour)
     q = ra / ca
+
     # increase 'number' accordingly
     number = int(np.round(number * q))
+
     # sample in rect. hull
-
-    x, y, w, h = rhull
-
-    roi = img[y : y + h, x : x + w]
-    Y, X = np.indices(roi.shape)
-    Y += y
-    X += x
-    samples = np.dstack((roi.copy(), Y, X))
-    samples = samples.reshape(
-        -1, samples.shape[2]
-    )  # create 1D array of (p,Y,X) 'points'
-    random_indices = np.arange(0, samples.shape[0])  # array of all indices
-    np.random.shuffle(random_indices)
-
-    samples = samples[random_indices[:number]]
+    samples = _random_sampler(img, rhull, number)
 
     # mask with contour
-    samples = [
+
+    return [
         s for s in samples if 0 < cv2.pointPolygonTest(contour, (s[2], s[1]), False)
     ]
-    return samples  # get N samples without replacement
-
-    # write output
 
 
 def partition_sampler(img):

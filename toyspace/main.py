@@ -54,16 +54,13 @@ if __name__ == "__main__":
     # samples = selectSample(regions, partition_sampler)
     # writeSampleImage(regions.shape, categories, samples[3], "randomborder_samples.png")
 
-    # samples = selectSample(regions, grid_sampler, [20, 10], [80, 120, 150, 190])
-    # random 5% state space coverage
-    # samples = selectSample(regions, random_sampler, image_area(regions) // 20)
-
     regions_g = ((255 / categories) * regions).astype(np.uint8)
     contours, _ = find_contours(regions_g, 100, complexity=cv2.RETR_EXTERNAL)
     cv2.drawContours(regions, contours, -1, 255, 1)
     cv2.imwrite(str(out_dir / "test.png"), regions)
 
-    samples = selectSample(regions, random_sampler2, contours[2], 100)
+    samples = selectSample(regions, random_sampler, 10000, contours[2])
+    # samples = selectSample(regions, random_sampler, image_area(regions) // 20)
     writeSampleImage(regions.shape, categories, samples, "randomborder_samples.png")
 
     labels = samples[:, 0]
