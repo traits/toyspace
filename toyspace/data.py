@@ -88,9 +88,54 @@ def random_sampler(img, number):
     return samples[random_indices[:number]]  # get N samples without replacement
 
 
+def random_sampler2(img, contour, number):
+    """
+    Samples pixel from random coordinates in contour
+    
+    Parameters:
+        :img: input gray image
+        :contour: ROI as OpenCV contour
+        :number: number of pixel drawn (w/o replacement)
+        :return: 1D-array of (pixel_value, y, x) samples
+    """
+
+    # calculate rect. hull
+    rhull = cv2.boundingRect(contour)
+    # calc. area quotient
+    ra = rhull[2] * rhull[3]
+    ca = cv2.contourArea(contour)
+    q = ra / ca
+    # increase 'number' accordingly
+    number = int(np.round(number * q))
+    # sample in rect. hull
+
+    x, y, w, h = rhull
+
+    roi = img[y : y + h, x : x + w]
+    Y, X = np.indices(roi.shape)
+    Y += y
+    X += x
+    samples = np.dstack((roi.copy(), Y, X))
+    samples = samples.reshape(
+        -1, samples.shape[2]
+    )  # create 1D array of (p,Y,X) 'points'
+    random_indices = np.arange(0, samples.shape[0])  # array of all indices
+    np.random.shuffle(random_indices)
+
+    samples = samples[random_indices[:number]]
+
+    # mask with contour
+    samples = [
+        s for s in samples if 0 < cv2.pointPolygonTest(contour, (s[2], s[1]), False)
+    ]
+    return samples  # get N samples without replacement
+
+    # write output
+
+
 def partition_sampler(img):
     """
-    Creates partition of the whole input image. Every sub-arrays contains all elements 
+    Creates partition of the whole input image. Every sub-array contains all elements 
     with the same pixel value and associated coordinates (pixel_value, y, x).
     
     Parameters:
@@ -136,12 +181,4 @@ def grid_sampler(img, steps, rect=None):
     X = np.around(np.linspace(x0, x1, x_steps)).astype(np.uint8)
     Y = np.around(np.linspace(y0, y1, y_steps)).astype(np.uint8)
 
-    # Slow?
-    samples = []
-    for y in Y:
-        for x in X:
-            samples.append(np.array([img[y, x], y, x]))
-
-    samples = np.asarray(samples)
-
-    return samples
+    return np.asarray([np.array([img[y, x], y, x]) for x in X for y in Y])
