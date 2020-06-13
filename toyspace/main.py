@@ -1,8 +1,5 @@
 from pytraits.image.region import *
-from pytraits.image.base import *
-from pytraits.image.io import *
 from pytraits.pytorch import cuda
-import cv2
 
 
 from data import *
@@ -23,56 +20,19 @@ device = torch.device(
     f"cuda:{cuda.Cuda().device_count()-1}" if torch.cuda.is_available() else "cpu"
 )
 
-
-def maximizedImage(img):
-    result = img.copy()
-    # preserve zero for background
-    return cv2.normalize(img, result, 1, 255, cv2.NORM_MINMAX)
-
-
-def writeColorImage(img, fname):
-    # https://matplotlib.org/3.1.1/gallery/color/colormap_reference.html
-    mplot_map = "PuBuGn"
-    write_image(
-        out_dir / fname, colormapped_image(img, mplot_map),
-    )
-
-
-def writeSampleImage(shape, max_value, samples, fname):
-    samples_img = np.zeros(shape, dtype=np.uint8)
-    for p in samples:
-        samples_img[p[1], p[2]] = np.uint8(255.0 * p[0] / max_value)
-
-    writeColorImage(samples_img, fname)
-
-
 if __name__ == "__main__":
-    regions, categories = loadToyImage(toy_image)
-    writeColorImage(maximizedImage(regions), "randomborder_colored.png")
+    regions, categories = load_toy_image(toy_image)
+    write_color_image(maximize_image(regions), out_dir / "randomborder_colored.png")
 
-    samples = roi_sampler(regions, [25, 32, 160, 177])
-    writeSampleImage(regions.shape, categories, samples, "roi_sampler.png")
-    samples = partition_sampler(regions)
-
-    i = 1
-    for s in samples:
-        writeSampleImage(regions.shape, categories, s, f"partition_sampler_{i:02d}.png")
-        i += 1
-
-    regions_g = ((255 / categories) * regions).astype(np.uint8)
-    contours, _ = find_contours(regions_g, 100, complexity=cv2.RETR_EXTERNAL)
-    cv2.drawContours(regions, contours, -1, 255, 1)
-    cv2.imwrite(str(out_dir / "random_sampler_contour_t.png"), regions)
-
-    samples = random_sampler(regions, 10000, contours[2])
-    writeSampleImage(regions.shape, categories, samples, "random_sampler_contour.png")
     samples = random_sampler(regions, image_area(regions) // 20)
-    writeSampleImage(regions.shape, categories, samples, "random_sampler_all.png")
+    write_sample_image(
+        regions.shape, categories, samples, out_dir / "random_sampler_all.png"
+    )
 
     labels = samples[:, 0]
     coords = np.multiply(samples[:, 1:], 1.0 / 255.0)  # normalize in [0,1]
 
-    train_data = convert2Dataset(coords, labels, device)
+    train_data = convert_to_dataset(coords, labels, device)
     #     # save_as_png(images, out_dir, correct_labels=labels, pred_labels=None)
     #     print("Trainings data extracted")
     #     test_images = loadDataAsDataset(data_dir / "test.csv", device)
